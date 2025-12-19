@@ -143,14 +143,20 @@ export const markAsCompleted = async (req, res) => {
 
     const user = await User.findById(userId);
 
-    if (!user.completedResources.includes(id)) {
+    const resourceIndex = user.completedResources.indexOf(id);
+    
+    // Toggle: if exists, remove; if not, add
+    if (resourceIndex > -1) {
+      user.completedResources.splice(resourceIndex, 1);
+      await user.save();
+      return res.json({ message: 'Resource marked as incomplete', completed: false });
+    } else {
       user.completedResources.push(id);
       await user.save();
+      return res.json({ message: 'Resource marked as completed', completed: true });
     }
-
-    res.json({ message: 'Resource marked as completed' });
   } catch (error) {
-    res.status(500).json({ message: 'Error marking resource as completed', error: error.message });
+    res.status(500).json({ message: 'Error toggling resource completion', error: error.message });
   }
 };
 
