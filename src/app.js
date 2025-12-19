@@ -24,13 +24,22 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/resources', resourceRoutes);
 
-// Error handling middleware
+// Error handling middleware (must be after routes)
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
+  console.error('Express Error Handler:', err);
+  console.error('Error Stack:', err.stack);
+  
+  // Don't send error stack in production
+  const errorResponse = {
+    message: err.message || 'Internal server error'
+  };
+  
+  if (process.env.NODE_ENV === 'development') {
+    errorResponse.stack = err.stack;
+    errorResponse.details = err;
+  }
+  
+  res.status(err.status || 500).json(errorResponse);
 });
 
 // 404 handler for API routes
