@@ -28,6 +28,89 @@ const comparePassword = async (plainPassword, storedPassword) => {
   return plainPassword === storedPassword;
 };
 
+export const registerUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      console.error('Registration failed: Missing email or password');
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      console.error('Registration failed: Invalid email format');
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [
+        { email: normalizedEmail },
+        { userId: normalizedEmail }
+      ]
+    });
+
+    if (existingUser) {
+      console.error('Registration failed: User already exists for email:', normalizedEmail);
+      return res.status(409).json({ message: 'User already exists' });
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(password, saltRounds);
+    } catch (hashError) {
+      console.error('Password hashing error:', hashError);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    // Create new user
+    const newUser = new User({
+      userId: normalizedEmail, // Use email as userId
+      email: normalizedEmail,
+      password: hashedPassword,
+      completedPages: [],
+      lastViewedPage: 1,
+      completedResources: []
+    });
+
+    // Save user to database
+    await newUser.save();
+
+    console.log('User registered successfully:', normalizedEmail);
+
+    // Return success response
+    return res.status(201).json({
+      message: 'User registered successfully'
+    });
+  } catch (error) {
+    console.error('REGISTRATION ERROR:', error);
+    
+    // Handle MongoDB duplicate key error
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      console.error('Registration failed: Duplicate', field);
+      return res.status(409).json({ message: 'User already exists' });
+    }
+
+    // Return safe error message
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? error.message 
+      : 'Internal server error';
+    
+    return res.status(500).json({ 
+      message: 'Internal server error'
+    });
+  }
+};
+
 export const login = async (req, res) => {
   try {
     // Log request body for debugging (without sensitive data)
