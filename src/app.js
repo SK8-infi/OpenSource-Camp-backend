@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
 import resourceRoutes from './routes/resource.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/resources', resourceRoutes);
+app.use('/api/user', userRoutes);
 
 // Error handling middleware (must be after routes)
 app.use((err, req, res, next) => {

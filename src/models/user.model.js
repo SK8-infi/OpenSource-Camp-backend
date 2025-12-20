@@ -18,6 +18,22 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  name: {
+    type: String,
+    trim: true
+  },
+  githubUsername: {
+    type: String,
+    trim: true
+  },
+  microsoftLearnEmail: {
+    type: String,
+    trim: true,
+    lowercase: true
+  },
+  completedPages: [{
+    type: Number
+  }],
   completedResources: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Resource'
