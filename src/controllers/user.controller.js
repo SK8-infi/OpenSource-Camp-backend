@@ -88,6 +88,42 @@ export const saveMicrosoftLearnEmail = async (req, res) => {
 };
 
 /**
+ * Mark a page as completed
+ */
+export const markPageComplete = async (req, res) => {
+  try {
+    const { pageNumber } = req.body;
+    const userId = req.user._id;
+
+    if (!pageNumber || typeof pageNumber !== 'number' || pageNumber < 1) {
+      return res.status(400).json({ message: 'Valid page number is required' });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Mark page as completed if not already
+    if (!user.completedPages.includes(pageNumber)) {
+      user.completedPages.push(pageNumber);
+      // Sort to keep pages in order
+      user.completedPages.sort((a, b) => a - b);
+      await user.save();
+    }
+
+    res.json({
+      message: `Page ${pageNumber} marked as completed`,
+      completedPages: user.completedPages
+    });
+  } catch (error) {
+    console.error('Error marking page as complete:', error);
+    res.status(500).json({ message: 'Error marking page as complete', error: error.message });
+  }
+};
+
+/**
  * Get current user's progress
  */
 export const getUserProgress = async (req, res) => {
