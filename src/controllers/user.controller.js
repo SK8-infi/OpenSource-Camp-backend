@@ -5,7 +5,7 @@ import User from '../models/user.model.js';
  */
 export const saveGitHubUsername = async (req, res) => {
   try {
-    const { githubUsername } = req.body;
+    const { githubUsername, clearPrevious } = req.body;
     const userId = req.user._id;
 
     if (!githubUsername || githubUsername.trim() === '') {
@@ -25,6 +25,11 @@ export const saveGitHubUsername = async (req, res) => {
 
     // Update GitHub username
     user.githubUsername = githubUsername.trim();
+
+    // If clearing previous, remove Page 1 from completed pages
+    if (clearPrevious) {
+      user.completedPages = user.completedPages.filter(page => page !== 1);
+    }
 
     // Mark Page 1 as completed if not already
     if (!user.completedPages.includes(1)) {
@@ -48,7 +53,7 @@ export const saveGitHubUsername = async (req, res) => {
  */
 export const saveMicrosoftLearnEmail = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, clearPrevious } = req.body;
     const userId = req.user._id;
 
     if (!email || email.trim() === '') {
@@ -69,6 +74,11 @@ export const saveMicrosoftLearnEmail = async (req, res) => {
 
     // Update Microsoft Learn email
     user.microsoftLearnEmail = email.trim().toLowerCase();
+
+    // If clearing previous, remove Page 2 from completed pages
+    if (clearPrevious) {
+      user.completedPages = user.completedPages.filter(page => page !== 2);
+    }
 
     // Mark Page 2 as completed if not already
     if (!user.completedPages.includes(2)) {
@@ -124,6 +134,38 @@ export const markPageComplete = async (req, res) => {
 };
 
 /**
+ * Mark a page as incomplete (remove from completed pages)
+ */
+export const markPageIncomplete = async (req, res) => {
+  try {
+    const { pageNumber } = req.body;
+    const userId = req.user._id;
+
+    if (!pageNumber || typeof pageNumber !== 'number' || pageNumber < 1) {
+      return res.status(400).json({ message: 'Valid page number is required' });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Remove page from completed pages
+    user.completedPages = user.completedPages.filter(page => page !== pageNumber);
+    await user.save();
+
+    res.json({
+      message: `Page ${pageNumber} marked as incomplete`,
+      completedPages: user.completedPages
+    });
+  } catch (error) {
+    console.error('Error marking page as incomplete:', error);
+    res.status(500).json({ message: 'Error marking page as incomplete', error: error.message });
+  }
+};
+
+/**
  * Get current user's progress
  */
 export const getUserProgress = async (req, res) => {
@@ -140,11 +182,43 @@ export const getUserProgress = async (req, res) => {
       name: user.name || null,
       githubUsername: user.githubUsername || null,
       microsoftLearnEmail: user.microsoftLearnEmail || null,
-      completedPages: user.completedPages || []
+      completedPages: user.completedPages || [],
+      lastViewedPage: user.lastViewedPage || 1
     });
   } catch (error) {
     console.error('Error fetching user progress:', error);
     res.status(500).json({ message: 'Error fetching user progress', error: error.message });
+  }
+};
+
+/**
+ * Update last viewed page
+ */
+export const updateLastViewedPage = async (req, res) => {
+  try {
+    const { pageNumber } = req.body;
+    const userId = req.user._id;
+
+    if (!pageNumber || typeof pageNumber !== 'number' || pageNumber < 1) {
+      return res.status(400).json({ message: 'Valid page number is required' });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.lastViewedPage = pageNumber;
+    await user.save();
+
+    res.json({
+      message: 'Last viewed page updated',
+      lastViewedPage: user.lastViewedPage
+    });
+  } catch (error) {
+    console.error('Error updating last viewed page:', error);
+    res.status(500).json({ message: 'Error updating last viewed page', error: error.message });
   }
 };
 

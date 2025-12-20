@@ -34,6 +34,10 @@ const userSchema = new mongoose.Schema({
   completedPages: [{
     type: Number
   }],
+  lastViewedPage: {
+    type: Number,
+    default: 1
+  },
   completedResources: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Resource'

@@ -4,7 +4,9 @@ import {
   saveGitHubUsername,
   saveMicrosoftLearnEmail,
   markPageComplete,
-  getUserProgress
+  markPageIncomplete,
+  getUserProgress,
+  updateLastViewedPage
 } from '../controllers/user.controller.js';
 
 const router = express.Router();
@@ -20,6 +22,12 @@ router.post('/microsoft-learn', saveMicrosoftLearnEmail);
 
 // Mark any page as completed
 router.post('/complete-page', markPageComplete);
+
+// Mark any page as incomplete
+router.post('/incomplete-page', markPageIncomplete);
+
+// Update last viewed page
+router.post('/last-viewed-page', updateLastViewedPage);
 
 // Get user progress
 router.get('/me', getUserProgress);
