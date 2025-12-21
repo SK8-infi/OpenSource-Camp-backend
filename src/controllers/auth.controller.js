@@ -33,19 +33,15 @@ export const registerUser = async (req, res) => {
     const { email, password } = req.body;
 
     // Validate input - check for existence
-    if (!email || !password) {
+    if (!email || password === undefined || password === null) {
       console.error('Registration failed: Missing email or password');
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Validate password is a string
-    if (typeof password !== 'string') {
-      console.error('Registration failed: Password must be a string. Received type:', typeof password);
-      return res.status(400).json({ message: 'Password must be a string' });
-    }
-
-    // Validate password is not empty and has minimum length
+    // Convert password to string (handles numbers from Google Sheets, etc.)
     const passwordString = String(password).trim();
+    
+    // Validate password is not empty and has minimum length
     if (!passwordString || passwordString.length < 6) {
       console.error('Registration failed: Password must be at least 6 characters long');
       return res.status(400).json({ message: 'Password must be at least 6 characters long' });
