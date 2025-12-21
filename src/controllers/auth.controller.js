@@ -32,14 +32,27 @@ export const registerUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
+    // Validate input - check for existence
     if (!email || !password) {
       console.error('Registration failed: Missing email or password');
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
+    // Validate password is a string
+    if (typeof password !== 'string') {
+      console.error('Registration failed: Password must be a string. Received type:', typeof password);
+      return res.status(400).json({ message: 'Password must be a string' });
+    }
+
+    // Validate password is not empty and has minimum length
+    const passwordString = String(password).trim();
+    if (!passwordString || passwordString.length < 6) {
+      console.error('Registration failed: Password must be at least 6 characters long');
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+
     // Normalize email
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = String(email).toLowerCase().trim();
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -61,13 +74,15 @@ export const registerUser = async (req, res) => {
       return res.status(409).json({ message: 'User already exists' });
     }
 
-    // Hash password
+    // Hash password - ensure it's a string
     const saltRounds = 10;
     let hashedPassword;
     try {
-      hashedPassword = await bcrypt.hash(password, saltRounds);
+      hashedPassword = await bcrypt.hash(passwordString, saltRounds);
     } catch (hashError) {
       console.error('Password hashing error:', hashError);
+      console.error('Password value:', passwordString);
+      console.error('Password type:', typeof passwordString);
       return res.status(500).json({ message: 'Internal server error' });
     }
 
