@@ -61,10 +61,6 @@ export const saveMicrosoftLearnEmail = async (req, res) => {
     }
 
     // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: 'Invalid email format' });
-    }
 
     const user = await User.findById(userId);
 
